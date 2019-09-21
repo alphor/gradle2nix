@@ -8,6 +8,10 @@ import com.github.ajalt.clikt.parameters.arguments.ProcessedArgument
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.convert
 import com.github.ajalt.clikt.parameters.arguments.default
+import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
+import com.github.ajalt.clikt.parameters.groups.default
+import com.github.ajalt.clikt.parameters.groups.single
+import com.github.ajalt.clikt.parameters.groups.required
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.moshi.Moshi
@@ -19,8 +23,7 @@ import java.io.File
 val shareDir: String = System.getProperty("org.nixos.gradle2nix.share")
 
 data class Config(
-    val wrapper: Boolean,
-    val gradleVersion: String?,
+    val gradleProvider: GradleProvider,
     val configurations: List<String>,
     val projectDir: File,
     val includes: List<File>,
@@ -30,20 +33,38 @@ data class Config(
     val allProjects = listOf(projectDir) + includes
 }
 
+sealed class GradleProvider {
+        object Wrapper : GradleProvider()
+        class Version(val version: String) : GradleProvider()
+        class File(val path: String) : GradleProvider()
+}
+
 class Main : CliktCommand(
     name = "gradle2nix"
 ) {
-    private val wrapper: Boolean by option("--gradle-wrapper", "-w",
-        help = "Use the project's gradle wrapper for building")
-        .flag()
-
-    private val gradleVersion: String? by option("--gradle-version", "-g",
-        metavar = "VERSION",
-        help = "Use a specific Gradle version")
+    private val gradleProvider: GradleProvider by mutuallyExclusiveOptions<GradleProvider>(
+        option(
+            "--gradle-wrapper",
+            "-w",
+            help = "Use the project's gradle wrapper for building"
+        ).convert { GradleProvider.Wrapper },
+        option(
+            "--gradle-version",
+            "-g",
+            metavar = "VERSION",
+            help = "Use a specific Gradle version"
+        ).convert { GradleProvider.Version(it) },
+        option(
+            "--gradle-file",
+            metavar = "FILE",
+            help = "Use a gradle binary on disk"
+        ).convert { GradleProvider.File(it) }
+    ).default(GradleProvider.Wrapper)
 
     private val configurations: List<String> by option("--configuration", "-c",
         metavar = "NAME",
         help = "Add a configuration to resolve (default: all configurations)")
+
         .multiple()
 
     private val includes: List<File> by option("--include", "-i",
@@ -87,7 +108,7 @@ class Main : CliktCommand(
     }
 
     override fun run() {
-        val config = Config(wrapper, gradleVersion, configurations, projectDir, includes, buildSrc, quiet)
+        val config = Config(gradleProvider, configurations, projectDir, includes, buildSrc, quiet)
         val (log, _, _) = Logger(verbose = !config.quiet)
 
         val paths = resolveProjects(config).map { p ->

@@ -1,15 +1,16 @@
 package org.nixos.gradle2nix
 
+import java.io.File
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 
 fun connect(config: Config): ProjectConnection =
     GradleConnector.newConnector()
         .apply {
-            if (config.wrapper) {
-                useBuildDistribution()
-            } else if (config.gradleVersion != null) {
-                useGradleVersion(config.gradleVersion)
+            when(val cfg = config.gradleProvider) {
+                is GradleProvider.Wrapper -> useBuildDistribution()
+                is GradleProvider.Version -> useGradleVersion(cfg.version)
+                is GradleProvider.File -> useInstallation(File(cfg.path))
             }
         }
         .forProjectDirectory(config.projectDir)
