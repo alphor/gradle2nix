@@ -26,8 +26,8 @@ fun ProjectConnection.getBuildModel(config: Config, path: String): DefaultBuild 
         arguments += "--project-dir=$path"
     }
 
-    if (config.nixMode) {
-        arguments += listOf("--offline", "--no-build-cache")
+    if (config.projectCacheDir != null) {
+        arguments += listOf("--project-cache-dir ${config.projectCacheDir}")
     }
 
     return model(Build::class.java)

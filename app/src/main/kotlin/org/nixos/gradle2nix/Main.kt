@@ -29,7 +29,7 @@ data class Config(
     val includes: List<File>,
     val buildSrc: Boolean,
     val quiet: Boolean,
-    val nixMode: Boolean
+    val projectCacheDir: Boolean
 ) {
     val allProjects = listOf(projectDir) + includes
 }
@@ -102,9 +102,9 @@ class Main : CliktCommand(
         .projectDir()
         .default(File("."))
 
-    private val nixMode: Boolean by option("--nix-mode",
-        help = "Disable networking, build caches, daemons")
-        .flag(default = false)
+    private val projectCacheDir: String? by option("--project-cache-dir",
+        help = "Specifies the project-specific cache directory.")
+        .flag(default = null)
 
     init {
         context {
@@ -113,7 +113,7 @@ class Main : CliktCommand(
     }
 
     override fun run() {
-        val config = Config(gradleProvider, configurations, projectDir, includes, buildSrc, quiet, nixMode)
+        val config = Config(gradleProvider, configurations, projectDir, includes, buildSrc, quiet, projectCacheDir)
         val (log, _, _) = Logger(verbose = !config.quiet)
 
         val paths = resolveProjects(config).map { p ->
