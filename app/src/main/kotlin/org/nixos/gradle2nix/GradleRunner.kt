@@ -27,7 +27,7 @@ fun ProjectConnection.getBuildModel(config: Config, path: String): DefaultBuild 
     }
 
     if (config.nixMode) {
-        arguments += listOf("--offline", "--no-daemon", "--no-build-cache")
+        arguments += listOf("--offline", "--no-build-cache")
     }
 
     return model(Build::class.java)
