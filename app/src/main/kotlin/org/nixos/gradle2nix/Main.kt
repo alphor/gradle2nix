@@ -28,7 +28,8 @@ data class Config(
     val projectDir: File,
     val includes: List<File>,
     val buildSrc: Boolean,
-    val quiet: Boolean
+    val quiet: Boolean,
+    val nixMode: Boolean
 ) {
     val allProjects = listOf(projectDir) + includes
 }
@@ -101,6 +102,10 @@ class Main : CliktCommand(
         .projectDir()
         .default(File("."))
 
+    private val nixMode: Boolean by option("--nix-mode",
+        help = "Disable networking, build caches, daemons")
+        .flag(default = false)
+
     init {
         context {
             helpFormatter = CliktHelpFormatter(showDefaultValues = true)
@@ -108,7 +113,7 @@ class Main : CliktCommand(
     }
 
     override fun run() {
-        val config = Config(gradleProvider, configurations, projectDir, includes, buildSrc, quiet)
+        val config = Config(gradleProvider, configurations, projectDir, includes, buildSrc, quiet, nixMode)
         val (log, _, _) = Logger(verbose = !config.quiet)
 
         val paths = resolveProjects(config).map { p ->
