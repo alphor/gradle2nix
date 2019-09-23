@@ -29,7 +29,7 @@ data class Config(
     val includes: List<File>,
     val buildSrc: Boolean,
     val quiet: Boolean,
-    val projectCacheDir: Boolean
+    val projectCacheDir: String?
 ) {
     val allProjects = listOf(projectDir) + includes
 }
@@ -103,8 +103,8 @@ class Main : CliktCommand(
         .default(File("."))
 
     private val projectCacheDir: String? by option("--project-cache-dir",
-        help = "Specifies the project-specific cache directory.")
-        .flag(default = null)
+        help = "The project-specific cache directory.")
+        
 
     init {
         context {
