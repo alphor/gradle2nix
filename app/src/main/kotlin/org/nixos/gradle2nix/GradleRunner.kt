@@ -27,7 +27,7 @@ fun ProjectConnection.getBuildModel(config: Config, path: String): DefaultBuild 
     }
 
     if (config.projectCacheDir != null) {
-        arguments += "--project-cache-dir ${config.projectCacheDir}"
+        arguments += "--project-cache-dir=${config.projectCacheDir}"
     }
 
     return model(Build::class.java)
